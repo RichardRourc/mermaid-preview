@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Mermaid 预览器</title>
+  <style>
+    #input { 
+      width: 100%; 
+      height: 200px;
+      font-family: monospace;
+    }
+    #output {
+      border: 1px solid #ccc;
+      padding: 20px;
+      margin-top: 10px;
+      min-height: 200px;
+    }
+    .loading {
+      color: #666;
+      font-style: italic;
+    }
+    .error {
+      color: #dc3545;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <textarea id="input"></textarea>
+  <div id="output" class="loading">等待输入...</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+  <script>
+    // 初始化配置
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'default',
+      securityLevel: 'loose',
+      fontFamily: 'Arial, sans-serif'
+    });
+
+    // 异步渲染函数
+    const render = async (code) => {
+      const output = document.getElementById('output');
+      
+      try {
+        // 显示加载状态
+        output.innerHTML = '<div class="loading">渲染中...</div>';
+        
+        // 生成唯一容器ID
+        const containerId = `mermaid-${Date.now()}`;
+        
+        // 异步渲染
+        const { svg } = await mermaid.render(containerId, code);
+        
+        // 更新显示
+        output.innerHTML = svg;
+        
+      } catch(err) {
+        // 显示详细错误
+        output.innerHTML = `
+          <div class="error">
+            <strong>渲染错误：</strong>
+            ${err.message.replace(/^Parse error/, '语法错误')}
+          </div>
+        `;
+      }
+    };
+
+    // 初始化示例内容
+    const initialCode = `graph TD
+      A[开始] --> B{判断}
+      B -->|是| C[执行]
+      B -->|否| D[结束]`;
+    
+    document.getElementById('input').value = initialCode;
+    render(initialCode);
+
+    // 输入监听（带防抖）
+    let timeout;
+    document.getElementById('input').addEventListener('input', (e) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => render(e.target.value), 500);
+    });
+  </script>
+</body>
+</html>
